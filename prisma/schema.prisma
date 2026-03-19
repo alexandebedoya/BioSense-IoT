@@ -1,0 +1,231 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ======================== USUARIOS ========================
+model Usuario {
+  id            String     @id @default(cuid())
+  email         String     @unique @db.VarChar(255)
+  nombre        String     @db.VarChar(255)
+  password      String     @db.VarChar(255) // Hash bcrypt
+  contrasena    String     @db.VarChar(255) // Alias para UI
+  
+  // Rol: admin, usuario, sensor-read-only
+  rol           String     @default("usuario")
+  
+  // Estado
+  activo        Boolean    @default(true)
+  verificado    Boolean    @default(false)
+  
+  // Información de perfil
+  nombreDispositivo String?  @db.VarChar(255) // Nombre del ESP32
+  ubicacion     String?    @db.VarChar(255)
+  telefono      String?    @db.VarChar(20)
+  
+  // Auditoría
+  creadoEn      DateTime   @default(now())
+  actualizadoEn DateTime   @updatedAt
+  ultimoLogin   DateTime?
+  
+  // Relaciones
+  sensores      SensorConfig[]
+  lecturas      LecturaSensor[]
+  alertas       Alerta[]
+  sesiones      SesionUsuario[]
+  preferenciaNotificacion PreferenciaNotificacion?
+  
+  @@index([email])
+  @@index([activo])
+}
+
+// ======================== SESIONES (JWT) ========================
+model SesionUsuario {
+  id            String     @id @default(cuid())
+  usuarioId     String
+  usuario       Usuario    @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  
+  // Token JWT
+  token         String     @unique @db.Text
+  
+  // Información
+  dispositivo   String?    @db.VarChar(255) // "iPhone", "Android", etc
+  direccionIP   String?    @db.VarChar(45)
+  
+  // Control
+  activa        Boolean    @default(true)
+  expiraEn      DateTime
+  
+  // Auditoría
+  creadoEn      DateTime   @default(now())
+  cerradoEn     DateTime?
+  
+  @@index([usuarioId])
+  @@index([token])
+  @@index([expiraEn])
+}
+
+// ======================== CONFIGURACIÓN DE SENSORES ========================
+model SensorConfig {
+  id            String     @id @default(cuid())
+  codigoMQ4     String     @default("MQ4_DEFAULT")
+  codigoMQ7     String     @default("MQ7_DEFAULT")
+  codigoMQ135   String     @default("MQ135_DEFAULT")
+  
+  // Propietario
+  usuarioId     String
+  usuario       Usuario    @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  
+  // Calibración base (valores en aire limpio)
+  baseMQ4       Int        @default(260)
+  baseMQ7       Int        @default(220)
+  baseMQ135     Int        @default(280)
+  
+  // Umbrales de alerta
+  umbralNormal  Int        @default(200)  // Límite entre NORMAL y MODERADO
+  umbralPeligro Int        @default(800)  // Límite entre MODERADO y PELIGRO
+  
+  // Control
+  activo        Boolean    @default(true)
+  nombre        String     @db.VarChar(255)
+  ubicacion     String?    @db.VarChar(255)
+  
+  // Auditoría
+  creadoEn      DateTime   @default(now())
+  actualizadoEn DateTime   @updatedAt
+  
+  // Relaciones
+  lecturas      LecturaSensor[]
+  alertas       Alerta[]
+  
+  @@index([usuarioId])
+  @@index([activo])
+}
+
+// ======================== LECTURAS DE SENSORES ========================
+model LecturaSensor {
+  id            String     @id @default(cuid())
+  
+  // Referencia
+  usuarioId     String
+  usuario       Usuario    @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  
+  configuracionId String
+  configuracion SensorConfig @relation(fields: [configuracionId], references: [id], onDelete: Cascade)
+  
+  // Datos de los 3 sensores
+  mq4           Int
+  mq7           Int
+  mq135         Int
+  
+  // Cálculos
+  deltaMQ4      Int        // MQ4 - base
+  deltaMQ7      Int        // MQ7 - base
+  deltaMQ135    Int        // MQ135 - base
+  valorPromedio Int        // max(deltaMQ4, deltaMQ7, deltaMQ135)
+  nivel         String     @db.Char(10) // "NORMAL", "MODERADO", "PELIGRO"
+  
+  // Metadata
+  temperatura   Float?     // Si hay sensor DHT
+  humedad       Float?
+  presion       Float?
+  
+  // Timestamps
+  lecturaMQTT   DateTime   // Timestamp del MQTT del ESP32
+  creadoEn      DateTime   @default(now())
+  
+  // Índices para consultas rápidas
+  @@index([usuarioId])
+  @@index([configuracionId])
+  @@index([nivel])
+  @@index([creadoEn])
+  @@index([lecturaMQTT])
+}
+
+// ======================== ALERTAS ========================
+model Alerta {
+  id            String     @id @default(cuid())
+  
+  // Referencia
+  usuarioId     String
+  usuario       Usuario    @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  
+  configuracionId String
+  configuracion SensorConfig @relation(fields: [configuracionId], references: [id], onDelete: Cascade)
+  
+  // Nivel
+  nivel         String     @db.Char(10) // "MODERADO", "PELIGRO"
+  
+  // Mensaje
+  titulo        String     @db.VarChar(255)
+  mensaje       String     @db.Text
+  
+  // Estado
+  leida         Boolean    @default(false)
+  procesada     Boolean    @default(false)
+  
+  // Control
+  notificacion  Boolean    @default(true)
+  
+  // Auditoría
+  creadoEn      DateTime   @default(now())
+  leidaEn       DateTime?
+  procesadaEn   DateTime?
+  
+  @@index([usuarioId])
+  @@index([configuracionId])
+  @@index([nivel])
+  @@index([leida])
+  @@index([creadoEn])
+}
+
+// ======================== HISTÓRICO DE ACCIONES ========================
+model AuditLog {
+  id            String     @id @default(cuid())
+  
+  usuarioId     String?    // Puede ser null para acciones del sistema
+  accion        String     @db.VarChar(100)
+  entidad       String     @db.VarChar(50)   // "Usuario", "Sensor", "Alerta"
+  entidadId     String?    @db.VarChar(50)
+  
+  cambios       String?    @db.Text // JSON con cambios
+  direccionIP   String?    @db.VarChar(45)
+  
+  creadoEn      DateTime   @default(now())
+  
+  @@index([usuarioId])
+  @@index([entidad])
+  @@index([creadoEn])
+}
+
+// ======================== NOTIFICACIONES PREFERIDAS ========================
+model PreferenciaNotificacion {
+  id            String     @id @default(cuid())
+  usuarioId     String     @unique
+  usuario       Usuario    @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  
+  // Canales
+  email         Boolean    @default(true)
+  sms           Boolean    @default(false)
+  push          Boolean    @default(true)
+  
+  // Niveles
+  notificarNormal   Boolean    @default(false)
+  notificarModerado Boolean    @default(true)
+  notificarPeligro  Boolean    @default(true)
+  
+  // Horarios (null = todas las horas)
+  horaInicioNotif   String?   @db.VarChar(5)  // "08:00"
+  horaFinNotif      String?   @db.VarChar(5)  // "22:00"
+  
+  creadoEn      DateTime   @default(now())
+  actualizadoEn DateTime   @updatedAt
+}

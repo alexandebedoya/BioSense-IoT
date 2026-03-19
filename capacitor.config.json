@@ -1,0 +1,9 @@
+{
+  "appId": "com.biosense.iot",
+  "appName": "Monitoreo Ambiental IoT",
+  "webDir": "out",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}
