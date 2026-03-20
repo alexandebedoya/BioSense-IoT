@@ -54,9 +54,9 @@ public class SecurityConfig {
 
     @Bean
     public ReactiveAuthenticationManager reactiveAuthenticationManager(ReactiveUserDetailsService userDetailsService,
-                                                                        PasswordEncoder passwordEncoder) {
-        UserDetailsRepositoryReactiveAuthenticationManager authenticationManager =
-                new UserDetailsRepositoryReactiveAuthenticationManager(userDetailsService);
+            PasswordEncoder passwordEncoder) {
+        UserDetailsRepositoryReactiveAuthenticationManager authenticationManager = new UserDetailsRepositoryReactiveAuthenticationManager(
+                userDetailsService);
         authenticationManager.setPasswordEncoder(passwordEncoder);
         return authenticationManager;
     }
@@ -65,12 +65,11 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(
-            "http://localhost:3000", 
-            "http://localhost:8080",
-            "http://localhost",
-            "capacitor://localhost",
-            "https://biosense-iot-production.up.railway.app"
-        ));
+                "http://localhost:3000",
+                "http://localhost:8100", // Puerto común de Ionic
+                "http://localhost",
+                "capacitor://localhost",
+                "https://biosense-iot-production.up.railway.app"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type"));
         configuration.setAllowCredentials(true);
