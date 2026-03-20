@@ -13,7 +13,7 @@ spring:
     init:
       mode: always
 
-  # Configuración de Seguridad y Google OAuth2 (Variables de Entorno)
+  # Configuración de Seguridad y Google OAuth2
   security:
     oauth2:
       client:
@@ -24,7 +24,8 @@ spring:
             scope:
               - email
               - profile
-            redirect-uri: "https://biosense-iot-production.up.railway.app/api/auth/success"
+            # CORRECCIÓN: Se usa {baseUrl} para que funcione en Localhost y Railway automáticamente
+            redirect-uri: "{baseUrl}/login/oauth2/code/google"
         provider:
           google:
             user-name-attribute: email
@@ -55,7 +56,8 @@ mqtt:
 
 server:
   port: ${PORT:8080}
-  forward-headers-strategy: native
+  # Importante para que Spring detecte correctamente el dominio en Railway
+  forward-headers-strategy: framework 
   error:
     include-message: always
     include-stacktrace: never
@@ -65,7 +67,7 @@ jwt:
   secret: ${JWT_SECRET}
   expiration: 604800000
 
-# Client ID de Android para validación (Extra Config)
+# Client ID de Android para validación
 app:
   oauth2:
     android-client-id: ${ANDROID_CLIENT_ID:669903110693-jvrh6rsb15e7lg5in9vemeqqmbggr8fl.apps.googleusercontent.com}
@@ -74,6 +76,7 @@ logging:
   level:
     root: INFO
     com.biosense: DEBUG
-    org.springframework.security: INFO
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
