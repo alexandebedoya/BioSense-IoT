@@ -123,8 +123,15 @@ export function useAuth(): AuthContext {
   const googleLogin = useCallback(async () => {
     try {
       setIsLoading(true)
-      // Endpoint de Spring Boot OAuth2 (Redirige a Google)
-      window.location.href = getApiUrl('/oauth2/authorization/google')
+      
+      // Construir URL de autorización. Pasamos el state=mobile para que el backend sepa que debe redirigir a la App
+      const authUrl = getApiUrl('/oauth2/authorization/google?state=mobile')
+      
+      console.log('[AUTH] Redirigiendo a login de Google:', authUrl)
+      
+      // En entorno móvil (Capacitor), lo ideal es usar el plugin Browser, 
+      // pero por ahora aseguramos que window.location use la URL de Railway.
+      window.location.href = authUrl
     } catch (error) {
       const mensaje = error instanceof Error ? error.message : 'Error desconocido'
       console.error('[AUTH] Error en Google login:', mensaje)

@@ -1,32 +1,53 @@
-import type { Metadata } from 'next'
+'use client'
+
 import { Inter, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { App } from '@capacitor/app'
 import './globals.css'
 
 const _inter = Inter({ subsets: ["latin"], variable: '--font-inter' });
 const _geistMono = Geist_Mono({ subsets: ["latin"], variable: '--font-mono' });
 
-export const metadata: Metadata = {
-  title: 'AirQuality Monitor - Dashboard IoT',
-  description: 'Sistema de monitoreo de calidad del aire con sensores MQ-4 y MQ-7',
-  generator: 'v0.app',
-  icons: {
-    icon: [
-      {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
-      },
-    ],
-    apple: '/apple-icon.png',
-  },
+function DeepLinkHandler() {
+  const router = useRouter()
+
+  useEffect(() => {
+    // Solo registrar el listener en entorno de navegador/móvil
+    if (typeof window !== 'undefined') {
+      const initDeepLink = async () => {
+        try {
+          App.addListener('appUrlOpen', (data: any) => {
+            console.log('[DEEP_LINK] URL abierta en la App:', data.url)
+            
+            // Ejemplo de URL: com.biosense.iot://oauth/callback?token=eyJ...
+            const url = new URL(data.url)
+            const token = url.searchParams.get('token')
+            
+            if (token) {
+              console.log('[DEEP_LINK] Token detectado, procesando login...')
+              localStorage.setItem('auth_token', token)
+              
+              // Redirigir a la página de callback para que procese el usuario
+              // o directamente a la home si ya lo tenemos
+              window.location.href = '/oauth/callback?token=' + token
+            }
+          })
+        } catch (e) {
+          console.warn('[DEEP_LINK] Capacitor App plugin no disponible (entorno Web)')
+        }
+      }
+
+      initDeepLink()
+    }
+
+    return () => {
+      App.removeAllListeners()
+    }
+  }, [router])
+
+  return null
 }
 
 export default function RootLayout({
@@ -37,6 +58,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="font-sans antialiased">
+        <DeepLinkHandler />
         {children}
         <Analytics />
       </body>
