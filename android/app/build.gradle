@@ -52,3 +52,15 @@ try {
 } catch(Exception e) {
     logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
 }
+
+plugins {
+    id 'com.android.application'
+    id 'com.google.gms.google-services' // <--- AGREGA ESTA LÍNEA
+}
+
+dependencies {
+    // Agrega la plataforma de Firebase (BoM) para manejar versiones
+    implementation platform('com.google.firebase:firebase-bom:34.10.0')
+    implementation 'com.google.firebase:firebase-analytics'
+    // ... tus otras dependencias
+}

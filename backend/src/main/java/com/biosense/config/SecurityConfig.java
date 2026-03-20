@@ -67,8 +67,9 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(List.of(
             "http://localhost:3000", 
             "http://localhost:8080",
-            "https://BioSense IOT-iot-production.up.railway.app",
-            "https://biosense-frontend.up.railway.app"
+            "http://localhost",
+            "capacitor://localhost",
+            "https://biosense-iot-production.up.railway.app"
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type"));

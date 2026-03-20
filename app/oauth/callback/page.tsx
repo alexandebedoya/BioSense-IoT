@@ -4,6 +4,8 @@ import { useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 
+import { getApiUrl } from '@/lib/api-config'
+
 function OAuthCallbackContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -18,7 +20,7 @@ function OAuthCallbackContent() {
       // Intentar obtener los datos del usuario para completar el login
       const fetchUserData = async () => {
         try {
-          const response = await fetch('http://localhost:8080/api/auth/validate', {
+          const response = await fetch(getApiUrl('/api/auth/validate'), {
             headers: {
               'Authorization': `Bearer ${token}`
             }

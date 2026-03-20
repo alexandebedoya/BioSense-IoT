@@ -9,6 +9,16 @@
             "projectName": "BioSense IOT-backend",
             "args": "",
             "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-BioSenseIOTApplication<biosense-backend>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.biosense.BioSenseIOTApplication",
+            "projectName": "biosense-backend",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
         }
     ]
 }

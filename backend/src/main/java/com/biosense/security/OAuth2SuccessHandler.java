@@ -39,7 +39,21 @@ public class OAuth2SuccessHandler implements ServerAuthenticationSuccessHandler 
                     String token = tokenProvider.generateToken(usuario);
                     log.info("[AUTH_DEBUG] JWT GENERADO: {}", token);
 
-                    String targetUrl = "https://biosense-iot-production.up.railway.app/api/auth/success?token=" + token;
+                    // Intentar determinar si venimos de la App móvil (puedes pasar un parámetro 'origin=mobile' al iniciar el login)
+                    String origin = webFilterExchange.getExchange().getRequest().getQueryParams().getFirst("state");
+                    
+                    // URL base del frontend en producción
+                    String frontendUrl = "https://biosense-iot-production.up.railway.app";
+                    String targetUrl = frontendUrl + "/oauth/callback?token=" + token;
+
+                    // Si detectamos que es móvil (por el User-Agent o un state específico), podemos usar el Deep Link
+                    String userAgent = webFilterExchange.getExchange().getRequest().getHeaders().getFirst("User-Agent");
+                    if (userAgent != null && (userAgent.contains("Capacitor") || userAgent.contains("Android"))) {
+                        log.info("[OAUTH2] Detectado entorno móvil, preparando Deep Link...");
+                        // Descomenta la siguiente línea si ya tienes configurado el Deep Link en AndroidManifest.xml
+                        // targetUrl = "com.biosense.iot://oauth/callback?token=" + token;
+                    }
+
                     log.info("[OAUTH2] Redirigiendo a: {}", targetUrl);
 
                     ServerHttpResponse response = webFilterExchange.getExchange().getResponse();

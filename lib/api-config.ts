@@ -5,16 +5,11 @@
  */
 
 const API_URL_DEVELOPMENT = 'http://localhost:8080'
-const API_URL_PRODUCTION = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
+const API_URL_PRODUCTION = process.env.NEXT_PUBLIC_API_URL || 'https://biosense-iot-production.up.railway.app'
 
 export function getApiBaseUrl(): string {
-  if (typeof window === 'undefined') {
-    // SSR - servidor
-    return API_URL_DEVELOPMENT
-  }
-
-  // Cliente - navegador
-  if (process.env.NODE_ENV === 'production') {
+  // Cliente - navegador o Capacitor
+  if (process.env.NODE_ENV === 'production' || (typeof window !== 'undefined' && window.location.hostname !== 'localhost')) {
     return API_URL_PRODUCTION
   }
 
@@ -22,7 +17,7 @@ export function getApiBaseUrl(): string {
 }
 
 export function getApiUrl(endpoint: string) {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+  const baseUrl = getApiBaseUrl();
   return `${baseUrl}${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`;
 }
 // Borra cualquier otro "return" que haya quedado suelto abajo
