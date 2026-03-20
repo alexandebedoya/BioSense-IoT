@@ -36,6 +36,11 @@ dependencies {
     implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
     implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
     implementation project(':capacitor-android')
+
+    // Firebase BoM and Analytics
+    implementation platform('com.google.firebase:firebase-bom:34.10.0')
+    implementation 'com.google.firebase:firebase-analytics'
+
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
@@ -53,14 +58,6 @@ try {
     logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
 }
 
-plugins {
-    id 'com.android.application'
-    id 'com.google.gms.google-services' // <--- AGREGA ESTA LÍNEA
-}
-
-dependencies {
-    // Agrega la plataforma de Firebase (BoM) para manejar versiones
-    implementation platform('com.google.firebase:firebase-bom:34.10.0')
-    implementation 'com.google.firebase:firebase-analytics'
-    // ... tus otras dependencias
-}
+// Add Firebase dependencies in the main dependencies block above
+// with platform BoM version for consistent dependency versions
+// (avoid duplicated dependencies block and plugin DSL mix in Gradle Script)
